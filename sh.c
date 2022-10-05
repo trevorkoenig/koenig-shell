@@ -23,7 +23,7 @@ int sh( int argc, char **argv, char **envp )
   char *homedir;
   struct pathelement *pathlist;
   int pid;
-  char *input;
+  char **arglist;
   char *cwd;
 
   uid = getuid();
@@ -48,14 +48,14 @@ int sh( int argc, char **argv, char **envp )
     /* print your prompt */
     printf("%s: ", pwd);
     /* get command line and process */
-    input = getString();
+    arglist = getcmd();
     
     /* check for each built in command and implement */
-    if (strcmp(input, "exit") == 0) {
-      free(input);
+    if (strcmp(arglist[0], "exit") == 0) {
+      free(arglist);
       exit(1);
     }
-    else if (strcmp(input, "ls") == 0) {
+    else if (strcmp(arglist[0], "list") == 0) {
       list(pwd);
     }
      /*  else  program to exec */
@@ -63,8 +63,8 @@ int sh( int argc, char **argv, char **envp )
       /* find it */
       
       /* do fork(), execve() and waitpid() */
-      if (fork() == 0) { 
-        execve(input, args, environ);
+      if (fork() == 0) {
+        execve(arglist[0], arglist+1, environ);
         exit(1);
       }
       else {
@@ -75,7 +75,7 @@ int sh( int argc, char **argv, char **envp )
 
       /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
     }
-    free(input);
+    free(arglist[0]);
   }
   return 0;
 } /* sh() */
@@ -84,7 +84,13 @@ char *which(char *command, struct pathelement *pathlist )
 {
    /* loop through pathlist until finding command and return it.  Return
    NULL when not found. */
+  struct pathelement *tmp;
+  tmp = pathlist;
+  while (tmp != NULL) {
 
+    tmp = tmp->next;
+  }
+  return NULL;
 } /* which() */
 
 char *where(char *command, struct pathelement *pathlist )
@@ -93,13 +99,13 @@ char *where(char *command, struct pathelement *pathlist )
 } /* where() */
 
 /**
- * @brief utilized by the ls command, prints out all file and directory names in a given directory
+ * @brief utilized by the list command, prints out all file and directory names in a given directory
+ * structure given by dgookin on c-for-dummies.com
  * 
  * @param dir directory to be indexed
  */
-void list ( char *dir )
+void list ( char *dir ) 
 {
-
   DIR *folder;
   struct dirent *entry;
   int files = 0;
@@ -115,30 +121,37 @@ void list ( char *dir )
   readdir(folder);
   while( (entry=readdir(folder)) ){
     files++;
-    printf("%-16s", entry->d_name);
-    if ((files % 6) == 0) {
-      printf("\n");
-    }
-  }
-  if ((files % 6) != 0) {
-    printf("\n");
+    printf("%s\n", entry->d_name);
   }
 
   closedir(folder);
 } /* list() */
 
-int callfn(char *string) {
+char **getcmd() {
+  char buffer[128];
+  fgets(buffer, 127, stdin);
+  int len = strlen(buffer);
+  char *trimmed = malloc(sizeof(char) * len);
+  strncpy(trimmed, buffer, len);
+  trimmed[len-1] = '\0';
+  
+  char *token;
+  token = strtok(trimmed, " ");
+  
+  char *ptrbuffer[12];
+  int i = 0;
+  while (token != NULL) {
+    ptrbuffer[i] = token;
+    token = strtok(NULL, " ");
+    i++;
+  }
+  
+  char **cmdargs;
+  cmdargs = malloc(i * sizeof(char*));
+  for (int index = 0; index < i; index++) {
+    cmdargs[index] = ptrbuffer[index];
+  }
 
-  return 0;
-}
-
-char* getString() {
-    char buffer[128];
-    fgets(buffer, 127, stdin);
-    int len = strlen(buffer);
-    char *trimmed = malloc(sizeof(char) * len);
-    strncpy(trimmed, buffer, len);
-    trimmed[len-1] = '\0';
-    return trimmed;
+  return cmdargs;
 }
 

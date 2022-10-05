@@ -7,7 +7,13 @@ char *which(char *command, struct pathelement *pathlist);
 char *where(char *command, struct pathelement *pathlist);
 void list ( char *dir );
 void printenv(char **envp);
-char *getString();
+char **getcmd();
 
 #define PROMPTMAX 32
 #define MAXARGS 10
+
+struct argnode
+{
+  char *element;			/* a dir in the path */
+  struct argnode *next;		/* pointer to next node */
+};
