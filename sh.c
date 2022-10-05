@@ -14,10 +14,7 @@
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
-  char *prompt = calloc(PROMPTMAX, sizeof(char));
-  char *commandline = calloc(MAX_CANON, sizeof(char));
   char *command, *arg, *commandpath, *p, *pwd, *owd;
-  char **args = calloc(MAXARGS, sizeof(char*));
   int uid, i, status, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
@@ -38,8 +35,6 @@ int sh( int argc, char **argv, char **envp )
   }
   owd = calloc(strlen(pwd) + 1, sizeof(char));
   memcpy(owd, pwd, strlen(pwd));
-  prompt[0] = ' '; prompt[1] = '\0';
-
   
   /* Put PATH into a linked list */
   pathlist = get_path();
@@ -59,45 +54,89 @@ int sh( int argc, char **argv, char **envp )
     else if (strcmp(arglist[0], "list") == 0) {
       list(pwd);
     }
+    else if (strcmp(arglist[0], "which") == 0) {
+      which(arglist[0], pathlist);
+    }
      /*  else  program to exec */
     else {
       /* find it */
-      
+      char *freeMe;
+      freeMe = arglist[0];
+
+      char *path = where(arglist[0], pathlist);
+      arglist[0] = path;
+
       /* do fork(), execve() and waitpid() */
-      if (fork() == 0) {
-        execve(arglist[0], arglist+1, environ);
-        exit(1);
+      if (path != NULL) {
+        if (fork() == 0) {
+          execve(path, arglist, environ);
+          free(freeMe);
+          exit(1);
+        }
+        else {
+          waitpid(0, 0, 0);
+        }
       }
       else {
-        waitpid(0, 0, 0);
+        free(freeMe);
       }
 
       /* else */
 
       /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
     }
-    free(arglist[0]);
     free(arglist);
   }
   return 0;
 } /* sh() */
 
+/**
+ * @brief loops through all directories contained in PATH environment variable until it finds an
+ * instance of the desired executable. returns NULL if not found
+ * 
+ * @param command command to be searched
+ * @param pathlist head of the linked list 
+ * @return char* path of the first executable found
+ */
 char *which(char *command, struct pathelement *pathlist )
 {
-   /* loop through pathlist until finding command and return it.  Return
-   NULL when not found. */
   struct pathelement *tmp;
   tmp = pathlist;
-  while (tmp != NULL) {
+  char *tmppath;
 
-    tmp = tmp->next;
+  while (tmp != NULL) {
+    strcpy(tmppath, tmp->element);
+    strcat(tmppath, command);
+    if (!access(tmppath, F_OK & X_OK)) {
+      return tmppath;
+    }
   }
   return NULL;
 } /* which() */
 
+/**
+ * @brief loops through all directories contained in PATH environment variable and finds all 
+ * instances of a given command. returns Null if not found
+ * 
+ * @param command command to be searched
+ * @param pathlist head of the linked list 
+ * @return char* path of all executables found joined by :
+ */
 char *where(char *command, struct pathelement *pathlist )
 {
   /* similarly loop through finding all locations of command */
+  struct pathelement *tmp;
+  tmp = pathlist;
+  char *tmppath;
+
+  while (tmp != NULL) {
+    strcpy(tmppath, tmp->element);
+    strcat(tmppath, command);
+    if (!access(tmppath, F_OK & X_OK)) {
+      return tmppath;
+    }
+  }
+  return NULL;
 } /* where() */
 
 /**
@@ -139,7 +178,7 @@ char **getcmd() {
   char buffer[128];
   fgets(buffer, 127, stdin);
   if (strcmp(buffer, "") == 0) {
-    return;
+    return NULL;
   }
   int len = strlen(buffer);
   char *trimmed = malloc(sizeof(char) * len);
