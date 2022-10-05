@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "pwd.h": "c"
+        "pwd.h": "c",
+        "get_path.h": "c"
     }
 }

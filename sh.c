@@ -52,6 +52,7 @@ int sh( int argc, char **argv, char **envp )
     
     /* check for each built in command and implement */
     if (strcmp(arglist[0], "exit") == 0) {
+      free(arglist[0]);
       free(arglist);
       exit(1);
     }
@@ -76,6 +77,7 @@ int sh( int argc, char **argv, char **envp )
       /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
     }
     free(arglist[0]);
+    free(arglist);
   }
   return 0;
 } /* sh() */
@@ -127,6 +129,12 @@ void list ( char *dir )
   closedir(folder);
 } /* list() */
 
+/**
+ * @brief polls for user input and seperates into array of strings. allocates both a single input string
+ *     and the list of pointers pointing to that string. must be freed using
+ * 
+ * @return char** a array of string pointers. cmdargs[0] holds the function to be called and cmdargs[1] and on holds the arguments
+ */
 char **getcmd() {
   char buffer[128];
   fgets(buffer, 127, stdin);
@@ -138,7 +146,7 @@ char **getcmd() {
   char *token;
   token = strtok(trimmed, " ");
   
-  char *ptrbuffer[12];
+  char *ptrbuffer[MAXARGS];
   int i = 0;
   while (token != NULL) {
     ptrbuffer[i] = token;

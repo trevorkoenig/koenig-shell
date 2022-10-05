@@ -11,9 +11,3 @@ char **getcmd();
 
 #define PROMPTMAX 32
 #define MAXARGS 10
-
-struct argnode
-{
-  char *element;			/* a dir in the path */
-  struct argnode *next;		/* pointer to next node */
-};
