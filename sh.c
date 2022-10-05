@@ -138,6 +138,9 @@ void list ( char *dir )
 char **getcmd() {
   char buffer[128];
   fgets(buffer, 127, stdin);
+  if (strcmp(buffer, "") == 0) {
+    return;
+  }
   int len = strlen(buffer);
   char *trimmed = malloc(sizeof(char) * len);
   strncpy(trimmed, buffer, len);
