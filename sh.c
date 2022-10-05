@@ -69,7 +69,7 @@ int sh( int argc, char **argv, char **envp )
         exit(1);
       }
       else {
-
+        waitpid(0, 0, 0);
       }
 
       /* else */
