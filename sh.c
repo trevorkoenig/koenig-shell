@@ -35,6 +35,7 @@ int sh( int argc, char **argv, char **envp )
     perror("getcwd");
     exit(2);
   }
+
   owd = calloc(strlen(pwd) + 1, sizeof(char));
   memcpy(owd, pwd, strlen(pwd));
   
@@ -58,6 +59,8 @@ int sh( int argc, char **argv, char **envp )
       }
       free(arglist[0]);
       free(arglist);
+      free(pwd);
+      free(owd);
       exit(1);
     }
     else if (strcmp(arglist[0], "list") == 0) {
