@@ -105,6 +105,8 @@ int sh( int argc, char **argv, char **envp )
  * @brief loops through all directories contained in PATH environment variable and returns first
  * instance of the desired executable. returns NULL if not found
  * 
+ * CURRENTLY ALLOCATES MEMORY
+ * 
  * @param command command to be searched
  * @param pathlist head of the linked list 
  * @return char* path of the first executable found
@@ -114,6 +116,7 @@ char *which(char *command, struct pathelement *pathlist )
   struct pathelement *tmp;
   tmp = pathlist;
   char *tmppath;
+  tmppath = malloc(50 * sizeof(char));
 
   while (tmp != NULL) {
     strcpy(tmppath, tmp->element);
