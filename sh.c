@@ -60,6 +60,7 @@ int sh( int argc, char **argv, char **envp )
     else if (strcmp(arglist[0], "test") == 0) {
       printf("Testing access funciton\n");
       char *tmp;
+      tmp = malloc(strlen(pwd) * 2 * sizeof(char));
       strcpy(tmp, pwd);
       printf("%s\n", tmp);
       strcat(tmp, "/hello.sh");
