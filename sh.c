@@ -49,6 +49,13 @@ int sh( int argc, char **argv, char **envp )
     
     /* check for each built in command and implement */
     if (strcmp(arglist[0], "exit") == 0) {
+      free(pathlist->element);
+      struct pathelement *tmppathelement;
+      while (pathlist != NULL) {
+        tmppathelement = pathlist;
+        pathlist = pathlist->next;
+        free(tmppathelement);
+      }
       free(arglist[0]);
       free(arglist);
       exit(1);
@@ -131,6 +138,7 @@ char *which(char *command, struct pathelement *pathlist )
     }
     tmp = tmp->next;
   }
+  free(tmppath);
   return NULL;
 } /* which() */
 
