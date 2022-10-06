@@ -49,6 +49,8 @@ int sh( int argc, char **argv, char **envp )
     arglist = getcmd();
     
     /* check for each built in command and implement */
+
+    /* EXIT FUNCTION */
     if (strcmp(arglist[0], "exit") == 0) {
       free(pathlist->element);
       struct pathelement *tmppathelement;
@@ -57,19 +59,25 @@ int sh( int argc, char **argv, char **envp )
         pathlist = pathlist->next;
         free(tmppathelement);
       }
-      free(arglist[0]);
+      free(arglist*);
       free(arglist);
       free(pwd);
       free(owd);
       exit(1);
     }
+
+    /* LIST FUNCTION */
     else if (strcmp(arglist[0], "list") == 0) {
       list(pwd);
     }
+    
+    /* WHICH FUNCTION */
     else if (strcmp(arglist[0], "which") == 0) {
       tmp = which(arglist[1], pathlist);
       free(tmp);
     }
+
+    /* TEST FUNCTION */
     else if (strcmp(arglist[0], "test") == 0) {
       printf("Testing access funciton\n");
       tmp = malloc(strlen(pwd) * 2 * sizeof(char));
