@@ -66,6 +66,7 @@ int sh( int argc, char **argv, char **envp )
       strcat(tmp, "/hello.sh");
       printf("%s\n", tmp);
       printf("access result: %d\n", access(tmp, F_OK & X_OK));
+      free(tmp);
     }
      /*  else  program to exec */
     else {
