@@ -23,6 +23,8 @@ int sh( int argc, char **argv, char **envp )
   char **arglist;
   char *cwd;
 
+  char *tmp; // dummy var to hold the freeable memory
+
   uid = getuid();
   password_entry = getpwuid(uid);               /* get passwd info */
   homedir = password_entry->pw_dir;		/* Home directory to start
@@ -55,11 +57,11 @@ int sh( int argc, char **argv, char **envp )
       list(pwd);
     }
     else if (strcmp(arglist[0], "which") == 0) {
-      which(arglist[1], pathlist);
+      tmp = which(arglist[1], pathlist);
+      free(tmp);
     }
     else if (strcmp(arglist[0], "test") == 0) {
       printf("Testing access funciton\n");
-      char *tmp;
       tmp = malloc(strlen(pwd) * 2 * sizeof(char));
       strcpy(tmp, pwd);
       printf("%s\n", tmp);
