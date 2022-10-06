@@ -55,7 +55,16 @@ int sh( int argc, char **argv, char **envp )
       list(pwd);
     }
     else if (strcmp(arglist[0], "which") == 0) {
-      which(arglist[0], pathlist);
+      which(arglist[1], pathlist);
+    }
+    else if (strcmp(arglist[0], "test") == 0) {
+      printf("Testing access funciton\n");
+      char *tmp;
+      strcpy(tmp, pwd);
+      printf("%s\n", tmp);
+      strcat(tmp, "/hello.sh");
+      printf("%s\n", tmp);
+      printf("access result: %d\n", access(tmp, F_OK & X_OK));
     }
      /*  else  program to exec */
     else {
@@ -91,7 +100,7 @@ int sh( int argc, char **argv, char **envp )
 } /* sh() */
 
 /**
- * @brief loops through all directories contained in PATH environment variable until it finds an
+ * @brief loops through all directories contained in PATH environment variable and returns first
  * instance of the desired executable. returns NULL if not found
  * 
  * @param command command to be searched
@@ -106,10 +115,14 @@ char *which(char *command, struct pathelement *pathlist )
 
   while (tmp != NULL) {
     strcpy(tmppath, tmp->element);
+    strcat(tmppath, "/");
     strcat(tmppath, command);
     if (!access(tmppath, F_OK & X_OK)) {
+      printf("Found something\n");
+      printf("%s\n", tmppath);
       return tmppath;
     }
+    tmp = tmp->next;
   }
   return NULL;
 } /* which() */
@@ -130,11 +143,13 @@ char *where(char *command, struct pathelement *pathlist )
   char *tmppath;
 
   while (tmp != NULL) {
+
     strcpy(tmppath, tmp->element);
     strcat(tmppath, command);
     if (!access(tmppath, F_OK & X_OK)) {
       return tmppath;
     }
+    tmp = tmp->next;
   }
   return NULL;
 } /* where() */
