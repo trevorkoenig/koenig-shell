@@ -59,7 +59,7 @@ int sh( int argc, char **argv, char **envp )
         pathlist = pathlist->next;
         free(tmppathelement);
       }
-      free(arglist*);
+      free(*arglist);
       free(arglist);
       free(pwd);
       free(owd);
