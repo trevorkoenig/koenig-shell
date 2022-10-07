@@ -15,11 +15,10 @@ int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
   char *command, *arg, *commandpath, *p, *pwd, *owd;
-  int uid, i, status, argsct, go = 1;
+  int pid, uid, i, status, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
   struct pathelement *pathlist;
-  int pid;
   char **arglist;
   char *cwd;
 
@@ -94,21 +93,23 @@ int sh( int argc, char **argv, char **envp )
       char *freeMe;
       freeMe = arglist[0];
 
-      char *path = where(arglist[0], pathlist);
+      char *path = which(arglist[0], pathlist);
       arglist[0] = path;
 
       /* do fork(), execve() and waitpid() */
-      if (path != NULL) {
-        if (fork() == 0) {
+      pid = fork();
+      printf("PID: %d\n", pid);
+
+      if (pid == 0) { // CHILD PROCESS
+        if (path != NULL) {
           execve(path, arglist, environ);
-          free(freeMe);
           exit(1);
-        }
-        else {
-          waitpid(0, 0, 0);
-        }
+        } 
       }
-      else {
+
+      else { // PARENT PROCESS
+        waitpid(pid, &status, 0);
+        printf("%d", status);
         free(freeMe);
       }
 
