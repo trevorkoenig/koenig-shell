@@ -46,9 +46,7 @@ int sh( int argc, char **argv, char **envp )
     printf("%s: ", pwd);
     /* get command line and process */
     arglist = getcmd();
-    char **freelist = arglist;
-    char *freestring = arglist[0];
-    
+
     /* check for each built in command and implement */
 
     /* EXIT FUNCTION */
@@ -111,8 +109,6 @@ int sh( int argc, char **argv, char **envp )
         }
       }
     }
-    free(*arglist);
-    free(arglist);
   }
   return 0;
 } /* sh() */
@@ -238,5 +234,10 @@ char **getcmd() {
   }
   cmdargs[i] = NULL;
   return cmdargs;
+}
+
+freecmd(char** args) {
+  free(*args);
+  free(args);
 }
 
