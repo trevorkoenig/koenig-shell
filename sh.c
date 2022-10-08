@@ -120,8 +120,6 @@ int sh( int argc, char **argv, char **envp )
         for (int i = 0; arglist[i] != NULL; i++) {
           printf("Arglist[%d]: %s\n", i, arglist[i]);
         }
-        free(arglist[0]);
-        free(arglist);
       }
     }
   }
