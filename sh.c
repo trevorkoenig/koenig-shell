@@ -111,8 +111,8 @@ int sh( int argc, char **argv, char **envp )
         }
       }
     }
-    free(freelist);
-    free(freestring);
+    free(*arglist);
+    free(arglist);
   }
   return 0;
 } /* sh() */
