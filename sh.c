@@ -222,7 +222,7 @@ void getargs(char **args) {
   char *token;
   token = strtok(buffer, " ");
   for (int i = 0; token != NULL && i < MAXARGS; i++) {
-    args[i] = malloc(strlen(token) * sizeof(char));
+    args[i] = malloc( (1 + strlen(token) ) * sizeof(char));
     strcpy(args[i], token);
     token = strtok(NULL, " ");
   }
