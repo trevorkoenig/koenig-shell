@@ -14,12 +14,11 @@
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
-  char *command, *arg, *commandpath, *p, *pwd, *owd;
-  int pid, uid, i, status, argsct, go = 1;
+  char *command, *commandpath, *p, *pwd, *owd;
+  int pid, uid, status, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
   struct pathelement *pathlist;
-  char **args;
   char *cwd;
 
   char *tmp; // dummy var to hold the freeable memory
@@ -35,6 +34,13 @@ int sh( int argc, char **argv, char **envp )
     exit(2);
   }
 
+  // initializing args
+  char **args= malloc(( 1 + MAXARGS ) * sizeof(char*));
+  for (int i = 0; i < MAXARGS + 1; i++) {
+    args[i] = NULL;
+    printf("args[%d]: %s\n", i, args[i]);
+  }
+
   owd = calloc(strlen(pwd) + 1, sizeof(char));
   memcpy(owd, pwd, strlen(pwd));
   
@@ -45,7 +51,7 @@ int sh( int argc, char **argv, char **envp )
     /* print your prompt */
     printf("%s: ", pwd);
     /* get command line and process */
-    args = getcmd();
+    getargs(args);
 
     /* check for each built in command and implement */
 
@@ -58,7 +64,8 @@ int sh( int argc, char **argv, char **envp )
         pathlist = pathlist->next;
         free(tmppathelement);
       }
-      freeargs(args);
+      clearargs(args);
+      free(args);
       free(pwd);
       free(owd);
       exit(1);
@@ -67,7 +74,6 @@ int sh( int argc, char **argv, char **envp )
     /* LIST FUNCTION */
     else if (strcmp(args[0], "list") == 0) {
       list(pwd);
-      freeargs(args);
     }
     
     /* WHICH FUNCTION */
@@ -79,13 +85,11 @@ int sh( int argc, char **argv, char **envp )
         printf("Path found: %s", tmp);
         free(tmp);
       }
-      freeargs(args);
     }
 
     /* TEST FUNCTION */
     else if (strcmp(args[0], "test") == 0) {
       printf("testing\n");
-      freeargs(args);
     }
 
      /*  else  program to exec */
@@ -95,7 +99,7 @@ int sh( int argc, char **argv, char **envp )
 
       /* do fork(), execve() and waitpid() */
       if (fnpath) {
-        char *freeme = args[0];
+        free(args[0]);
         args[0] = fnpath;
         pid = fork();
         
@@ -106,9 +110,7 @@ int sh( int argc, char **argv, char **envp )
         }
       } else {
         fprintf(stderr, "%s: Command not found.\n", args[0]);
-        for (int i = 0; args[i] != NULL; i++) {
-          printf("args[%d]: %s\n", i, args[i]);
-        }
+        printargs(args);
       }
     }
   }
@@ -193,7 +195,7 @@ void list ( char *dir )
 
   readdir(folder);
   readdir(folder);
-  while( (entry=readdir(folder)) ){
+  while(( entry = readdir(folder) )) {
     files++;
     printf("%s\n", entry->d_name);
   }
@@ -201,45 +203,42 @@ void list ( char *dir )
   closedir(folder);
 } /* list() */
 
-/**
- * @brief polls for user input and seperates into array of strings. ALLOCATES both a single input string
- *     and the list of pointers pointing to that string. must be freed.
+ 
+ /**
+ * @brief clears and replaces args with input from command line
  * 
- * @return char** a array of string pointers. cmdargs[0] holds the function to be called and cmdargs[1] and on holds the arguments
+ * @param args holds the address of args to be revised
  */
-char **getcmd() {
+void getargs(char **args) {
+  // clear args
+  clearargs(args);
+  
+  // grab input
   char buffer[128];
   fgets(buffer, 127, stdin);
-  if (strcmp(buffer, "") == 0) {
-    return NULL;
-  }
-  int len = strlen(buffer);
-  char *trimmed = malloc(sizeof(char) * len);
-  strncpy(trimmed, buffer, len);
-  trimmed[len-1] = '\0';
+  buffer[strlen(buffer) - 1] = '\0';
   
+  // chop strings and copy to args
   char *token;
-  token = strtok(trimmed, " ");
-  
-  char *ptrbuffer[MAXARGS];
-  int i = 0;
-  while (token != NULL) {
-    ptrbuffer[i] = token;
+  token = strtok(buffer, " ");
+  for (int i = 0; token != NULL && i < MAXARGS; i++) {
+    args[i] = malloc(strlen(token) * sizeof(char));
+    strcpy(args[i], token);
     token = strtok(NULL, " ");
-    i++;
   }
-  
-  char **cmdargs;
-  cmdargs = malloc((i + 1) * sizeof(char*));
-  for (int index = 0; index < i; index++) {
-    cmdargs[index] = ptrbuffer[index];
-  }
-  cmdargs[i] = NULL;
-  return cmdargs;
 }
 
-void freeargs(char** args) {
-  free(*args);
-  free(args);
+void clearargs(char **args) {
+  for (int i = 0; i < MAXARGS; i++) {
+    if (args[i] != NULL) {
+      free( *(args+i) );
+      args[i] = NULL;
+    }
+  }
 }
 
+void printargs(char **args) {
+  for (int i = 0; i < MAXARGS; i++) {
+    printf("args[%d]: %s\n", i, args[i]);
+  }
+}
