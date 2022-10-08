@@ -72,8 +72,13 @@ int sh( int argc, char **argv, char **envp )
     
     /* WHICH FUNCTION */
     else if (strcmp(arglist[0], "which") == 0) {
-      tmp = which(arglist[1], pathlist);
-      free(tmp);
+      if (arglist[1] == NULL) {
+        printf("Error: which requires at least 1 argument\n");
+      } else {
+        tmp = which(arglist[1], pathlist);
+        printf("Path found: %s", tmp);
+        free(tmp);
+      }
     }
 
     /* TEST FUNCTION */
@@ -81,43 +86,44 @@ int sh( int argc, char **argv, char **envp )
       printf("Testing access funciton\n");
       tmp = malloc(strlen(pwd) * 2 * sizeof(char));
       strcpy(tmp, pwd);
-      printf("%s\n", tmp);
       strcat(tmp, "/hello.sh");
       printf("%s\n", tmp);
-      printf("access result: %d\n", access(tmp, F_OK & X_OK));
+      if (!access(tmp, F_OK & X_OK)) {
+        printf("Path found: %s\n", tmp);
+      }
+      char *plugthis[] = {tmp};
+      execve(tmp, plugthis, NULL);
       free(tmp);
     }
      /*  else  program to exec */
     else {
       /* find it */
-      char *freeMe;
-      freeMe = arglist[0];
-
-      char *path = which(arglist[0], pathlist);
-      arglist[0] = path;
+      char *fnpath = which(arglist[0], pathlist);
 
       /* do fork(), execve() and waitpid() */
-      pid = fork();
-      printf("PID: %d\n", pid);
+      if (fnpath) {
+        char *freeme = arglist[0];
+        arglist[0] = fnpath;
+        pid = fork();
+        
+        if (pid == 0) {   // CHILD
+          execve(arglist[0], arglist, environ);
+        } else {          // PARENT
+          wait(NULL);
+        }
 
-      if (pid == 0) { // CHILD PROCESS
-        if (path != NULL) {
-          execve(path, arglist, environ);
-          exit(1);
-        } 
+        free(arglist);
+        free(fnpath);
+        free(freeme);
+      } else {
+        fprintf(stderr, "%s: Command not found.\n", arglist[0]);
+        for (int i = 0; arglist[i] != NULL; i++) {
+          printf("Arglist[%d]: %s\n", i, arglist[i]);
+        }
+        free(arglist[0]);
+        free(arglist);
       }
-
-      else { // PARENT PROCESS
-        waitpid(pid, &status, 0);
-        printf("%d", status);
-        free(freeMe);
-      }
-
-      /* else */
-
-      /* fprintf(stderr, "%s: Command not found.\n", args[0]); */
     }
-    free(arglist);
   }
   return 0;
 } /* sh() */
@@ -144,8 +150,6 @@ char *which(char *command, struct pathelement *pathlist )
     strcat(tmppath, "/");
     strcat(tmppath, command);
     if (!access(tmppath, F_OK & X_OK)) {
-      printf("Found something\n");
-      printf("%s\n", tmppath);
       return tmppath;
     }
     tmp = tmp->next;
@@ -211,8 +215,8 @@ void list ( char *dir )
 } /* list() */
 
 /**
- * @brief polls for user input and seperates into array of strings. allocates both a single input string
- *     and the list of pointers pointing to that string. must be freed using
+ * @brief polls for user input and seperates into array of strings. ALLOCATES both a single input string
+ *     and the list of pointers pointing to that string. must be freed.
  * 
  * @return char** a array of string pointers. cmdargs[0] holds the function to be called and cmdargs[1] and on holds the arguments
  */
@@ -239,11 +243,11 @@ char **getcmd() {
   }
   
   char **cmdargs;
-  cmdargs = malloc(i * sizeof(char*));
+  cmdargs = malloc((i + 1) * sizeof(char*));
   for (int index = 0; index < i; index++) {
     cmdargs[index] = ptrbuffer[index];
   }
-
+  cmdargs[i] = NULL;
   return cmdargs;
 }
 
