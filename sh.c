@@ -46,6 +46,8 @@ int sh( int argc, char **argv, char **envp )
     printf("%s: ", pwd);
     /* get command line and process */
     arglist = getcmd();
+    char **freelist = arglist;
+    char *freestring = arglist[0];
     
     /* check for each built in command and implement */
 
@@ -83,18 +85,9 @@ int sh( int argc, char **argv, char **envp )
 
     /* TEST FUNCTION */
     else if (strcmp(arglist[0], "test") == 0) {
-      printf("Testing access funciton\n");
-      tmp = malloc(strlen(pwd) * 2 * sizeof(char));
-      strcpy(tmp, pwd);
-      strcat(tmp, "/hello.sh");
-      printf("%s\n", tmp);
-      if (!access(tmp, F_OK & X_OK)) {
-        printf("Path found: %s\n", tmp);
-      }
-      char *plugthis[] = {tmp};
-      execve(tmp, plugthis, NULL);
-      free(tmp);
+      printf("testing\n");
     }
+
      /*  else  program to exec */
     else {
       /* find it */
@@ -111,10 +104,6 @@ int sh( int argc, char **argv, char **envp )
         } else {          // PARENT
           wait(NULL);
         }
-
-        free(arglist);
-        free(fnpath);
-        free(freeme);
       } else {
         fprintf(stderr, "%s: Command not found.\n", arglist[0]);
         for (int i = 0; arglist[i] != NULL; i++) {
@@ -122,6 +111,8 @@ int sh( int argc, char **argv, char **envp )
         }
       }
     }
+    free(freelist);
+    free(freestring);
   }
   return 0;
 } /* sh() */
