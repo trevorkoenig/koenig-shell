@@ -73,6 +73,7 @@ int sh( int argc, char **argv, char **envp )
         free(tmppathelement);
       }
       clearargs(args);
+      free(prompt);
       free(args);
       free(pwd);
       free(owd);
@@ -325,7 +326,6 @@ void cd(char *owd, char *pwd, char *homedir, char **args) {
   if (args[1]) {
     // go to previous directory
     if (strcmp(args[1], "-") == 0) {
-      char *tmp = malloc(strlen(owd) * sizeof(char));
       chdir(pwd);
       strcpy(pwd, owd);
       getcwd(owdbuf, sizeof(owdbuf));
