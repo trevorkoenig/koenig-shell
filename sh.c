@@ -14,10 +14,6 @@
 #include <math.h>
 #include "sh.h"
 
-int throwerror() {
-  exit(12);
-}
-
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
@@ -66,7 +62,16 @@ int sh( int argc, char **argv, char **envp )
     printf("%s [%s]> ", prompt ? prompt : "", owd);
     /* get command line and process */
     argsct = getargs(args);
-    if (!args[0]) {
+    if (argsct == -1) {
+      clearargs(args);
+      free(prompt);
+      free(args);
+      free(pwd);
+      free(owd);
+      go = 0;
+      printf("Exiting\n");
+      exit(29);
+    } else if (argsct == 0) {
       continue;
     }
 
@@ -494,7 +499,13 @@ int getargs(char **args) {
   
   // grab input
   char buffer[128];
+  char *checkeof;
   fgets(buffer, 127, stdin);
+  if (checkeof == NULL) {
+    printf("\nEOF Detected\n");
+    fflush(stdout);
+    return -1;
+  }
   buffer[strlen(buffer) - 1] = '\0';
   
   // chop strings and copy to args
@@ -562,7 +573,7 @@ void cSigHandler(int sig) {
     break;
   
   case SIGTSTP:
-    exit(128 + SIGTSTP;
+    exit(128 + SIGTSTP);
     break;
   }
 }
