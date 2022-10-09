@@ -14,6 +14,10 @@
 #include <math.h>
 #include "sh.h"
 
+int throwerror() {
+  exit(12);
+}
+
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
@@ -36,6 +40,10 @@ int sh( int argc, char **argv, char **envp )
     perror("getcwd");
     exit(2);
   }
+
+  // signal handlers
+  signal(SIGINT, sigHandler);
+  signal(SIGTSTP, sigHandler);
 
   // initializing args
   char **args= malloc(( 1 + MAXARGS ) * sizeof(char*));
@@ -66,6 +74,7 @@ int sh( int argc, char **argv, char **envp )
 
     /* EXIT FUNCTION */
     if (strcmp(args[0], "exit") == 0) {
+      printf("Exiting\n");
       free(pathlist->element);
       struct pathelement *tmppathelement;
       while (pathlist != NULL) {
@@ -83,6 +92,7 @@ int sh( int argc, char **argv, char **envp )
     
     /* WHICH FUNCTION */
     else if (strcmp(args[0], "which") == 0) {
+      printf("Executing 'which'\n");
       if (args[1] == NULL) {
         printf("Error: which requires at least 1 argument\n");
       } else {
@@ -98,6 +108,7 @@ int sh( int argc, char **argv, char **envp )
 
     /* WHERE FUNCTION */
     else if (strcmp(args[0], "where") == 0) {
+      printf("Executing 'where'\n");
       if (args[1] == NULL) {
         printf("Error: where requires at least 1 argument\n");
       } else {
@@ -113,57 +124,72 @@ int sh( int argc, char **argv, char **envp )
 
     /* CD FUNCTION */
     else if (strcmp(args[0], "cd") == 0) {
+      printf("Executing 'cd'\n");
       cd(owd, pwd, homedir, args, argsct);
     }
 
     /* PWD FUNCTION */
     else if (strcmp(args[0], "pwd") == 0) {
+      printf("Executing 'pwd'\n");
       printwd();
     }
 
     /* LIST FUNCTION */
     else if (strcmp(args[0], "list") == 0) {
+      printf("Executing 'list'\n");
       list(owd);
     }
 
     /* PID FUNCTION */
     else if (strcmp(args[0], "pid") == 0) {
+        printf("Executing 'pid'\n");
       printf("PID: %d\n", getpid());
     }
 
     /* KILL FUNCTION */
     else if (strcmp(args[0], "kill") == 0) {
-      if (argsct == 1);
-      else if (argsct == 2) {
-        kill(atoi(args[1]), SIGTERM);
-      } else if (argsct == 3) {
+      printf("Executing 'kill'\n");
+      int didkill = 1;
+      
+      if (argsct == 2) {
+        didkill = kill(atoi(args[1]), SIGTERM);
+      }
+      else if (argsct == 3) {
         if (args[1][0] == '-') {
-          kill(atoi(args[2]), atoi(args[1]));
-        } else {
-          kill(atoi(args[1]), atoi(args[2]));
+          int signal = atoi(args[1] + 1);
+          didkill = kill(atoi(args[2]), signal);
         }
-      } else {
-        fprintf(stderr, "Too many arguments for kill\n");
+        else if (args[2][0] == '-') {
+          int signal = atoi(args[2] + 1);
+          didkill = kill(atoi(args[1]), signal);
+        }
+      }
+      if (didkill) {
+        perror("Error with kill");
       }
     }
 
     /* PROMPT FUNCTION */
     else if (strcmp(args[0], "prompt") == 0) {
+      printf("Executing 'prompt'\n");
       setprompt(prompt, args, argsct);
     }
 
     /* PRINTENV FUNCTION*/
     else if (strcmp(args[0], "printenv") == 0) {
+      printf("Executing 'printenv'\n");
       printenv(environ, args, argsct);
     }
 
     /* SETENV FUNCTION */
     else if (strcmp(args[0], "setenv") == 0) {
+      printf("Executing 'setenv'\n");
       setenviron(environ, args, argsct);
     }
 
     /* TEST FUNCTION */
     else if (strcmp(args[0], "test") == 0) {
+      printf("Executing 'test'\n");
       printf("testing\n");
     }
 
@@ -186,14 +212,25 @@ int sh( int argc, char **argv, char **envp )
 
       /* do fork(), execve() and waitpid() */
       if (fnpath) {
+        printf("Executing '%s'\n", fnpath);
         free(args[0]);
         args[0] = fnpath;
         pid = fork();
+
+        int status;
         
         if (pid == 0) {   // CHILD
-          execve(args[0], args, environ);
+          signal(SIGINT, cSigHandler);
+          signal(SIGTSTP, cSigHandler);
+          int ec = execve(args[0], args, environ);
+          exit(ec);
         } else {          // PARENT
-          wait(NULL);
+          waitpid(-1, &status, 0);
+          if (WIFEXITED(status)) {
+            printf("Process exited successfully: Exit code %d\n", WEXITSTATUS(status));
+          } else {
+            fprintf(stderr, "Process exited abnormally\n");
+          }
         }
       } else {
         fprintf(stderr, "%s: Command not found.\n", args[0]);
@@ -497,5 +534,35 @@ void clearargs(char **args) {
 void printargs(char **args) {
   for (int i = 0; i < MAXARGS; i++) {
     printf("args[%d]: %s\n", i, args[i]);
+  }
+}
+
+void sigHandler(int sig) {
+  switch (sig)
+  {
+  case SIGINT:
+    signal(SIGINT, sigHandler);
+    printf("\n Cannot be terminated using Ctrl+C\n");
+    fflush(stdout);
+    break;
+  
+  case SIGTSTP:
+    signal(SIGTSTP, sigHandler);
+    printf("\n Cannot be terminated using Ctrl+Z\n");
+    fflush(stdout);
+    break;
+  }
+}
+
+void cSigHandler(int sig) {
+  switch (sig)
+  {
+  case SIGINT:
+    exit(128 + SIGINT);
+    break;
+  
+  case SIGTSTP:
+    exit(128 + SIGTSTP;
+    break;
   }
 }

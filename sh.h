@@ -14,6 +14,8 @@ void setenviron(char **environ, char **args, int argsct);
 int getargs(char **args);
 void clearargs(char **args);
 void printargs(char **args);
+void sigHandler(int sig);
+void cSigHandler(int sig);
 
 #define PROMPTMAX 32
 #define MAXARGS 10
