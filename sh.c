@@ -337,7 +337,7 @@ void cd(char *owd, char *pwd, char *homedir, char **args) {
     else {
       struct stat statbuf;
       stat(args[1], &statbuf);
-      if ( S_ISDIR( statbuf.st_mode ) != 0 ) {
+      if ( access(args[1], F_OK) && S_ISDIR( statbuf.st_mode ) != 0 ) {
         strcpy(pwd, owd);
         chdir(args[1]);
         getcwd(owdbuf, sizeof(owdbuf));
