@@ -9,12 +9,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <glob.h>
+#include <math.h>
 #include "sh.h"
 
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
-  char *command, *commandpath, *p, *pwd, *owd;
+  char *command, *commandpath, *prompt, *p, *pwd, *owd;
   int pid, uid, status, argsct, go = 1;
   struct passwd *password_entry;
   char *homedir;
@@ -40,6 +42,9 @@ int sh( int argc, char **argv, char **envp )
     args[i] = NULL;
   }
 
+  // initialize prompt
+  prompt = malloc(PROMPTMAX * sizeof(char));
+
   owd = calloc(strlen(pwd) + 1, sizeof(char));
   memcpy(owd, pwd, strlen(pwd));
   
@@ -48,9 +53,12 @@ int sh( int argc, char **argv, char **envp )
   while ( go )
   {
     /* print your prompt */
-    printf("%s: ", pwd);
+    printf("%s [%s]> ", prompt ? prompt : "", pwd);
     /* get command line and process */
     getargs(args);
+    if (!args[0]) {
+      continue;
+    }
 
     /* check for each built in command and implement */
 
@@ -68,11 +76,6 @@ int sh( int argc, char **argv, char **envp )
       free(pwd);
       free(owd);
       exit(1);
-    }
-
-    /* LIST FUNCTION */
-    else if (strcmp(args[0], "list") == 0) {
-      list(pwd);
     }
     
     /* WHICH FUNCTION */
@@ -105,6 +108,36 @@ int sh( int argc, char **argv, char **envp )
       }
     }
 
+    /* CD FUNCTION */
+    else if (strcmp(args[0], "cd") == 0) {
+      printf("cd\n");
+    }
+
+    /* PWD FUNCTION */
+    else if (strcmp(args[0], "pwd") == 0) {
+      printf("PWD\n");
+    }
+
+    /* LIST FUNCTION */
+    else if (strcmp(args[0], "list") == 0) {
+      list(pwd);
+    }
+
+    /* PID FUNCTION */
+    else if (strcmp(args[0], "pid") == 0) {
+      printf("pid\n");
+    }
+
+    /* KILL FUNCTION */
+    else if (strcmp(args[0], "kill") == 0) {
+      printf("kill\n");
+    }
+
+    /* PROMPT FUNCTION */
+    else if (strcmp(args[0], "prompt") == 0) {
+      setprompt(prompt, args);
+    }
+
     /* TEST FUNCTION */
     else if (strcmp(args[0], "test") == 0) {
       printf("testing\n");
@@ -113,7 +146,19 @@ int sh( int argc, char **argv, char **envp )
      /*  else  program to exec */
     else {
       /* find it */
-      char *fnpath = which(args[0], pathlist);
+      char *fnpath;
+
+      // checking for relative paths
+      if (args[0][0] == '/' || args[0][0] == '.') {
+        if (!access(args[0], F_OK & X_OK)) {
+          fnpath = malloc(strlen(args[0]) * sizeof(char));
+          strcpy(fnpath, args[0]);
+        } else {
+          fnpath = NULL;
+        }
+      } else {
+        fnpath = which(args[0], pathlist);
+      }
 
       /* do fork(), execve() and waitpid() */
       if (fnpath) {
@@ -136,9 +181,8 @@ int sh( int argc, char **argv, char **envp )
 
 /**
  * @brief loops through all directories contained in PATH environment variable and returns first
- * instance of the desired executable. returns NULL if not found
- * 
- * CURRENTLY ALLOCATES MEMORY
+ * instance of the desired executable, returns NULL if not founD
+ * ALLOCATES RETURN STRING
  * 
  * @param command command to be searched
  * @param pathlist head of the linked list 
@@ -152,9 +196,12 @@ char *which(char *command, struct pathelement *pathlist )
   char *tmppath;
 
   while (tmp != NULL) {
+    // builds buffer
     strcpy(buffer, tmp->element);
     strcat(buffer, "/");
     strcat(buffer, command);
+
+    // if path found, return
     if (!access(buffer, F_OK & X_OK)) {
       tmppath = malloc( (1 + strlen(buffer)) * sizeof(char));
       strcpy(tmppath, buffer);
@@ -167,10 +214,11 @@ char *which(char *command, struct pathelement *pathlist )
 
 /**
  * @brief loops through all directories contained in PATH environment variable and finds all 
- * instances of a given command. returns Null if not found
+ * instances of a given command, returns NULL if not found
+ * ALLOCATES RETURN STRING
  * 
  * @param command command to be searched
- * @param pathlist head of the linked list 
+ * @param pathlist head of the linked list of PATH values
  * @return char* path of all executables found joined by :
  */
 char *where(char *command, struct pathelement *pathlist )
@@ -182,20 +230,27 @@ char *where(char *command, struct pathelement *pathlist )
   char *path;
 
   while (tmp != NULL) {
+    // builds buffer
     strcpy(buffer, tmp->element);
     strcat(buffer, "/");
     strcat(buffer, command);
+
+    // if path found, concatenate
     if (!access(buffer, F_OK & X_OK)) {
       strcat(bigbuffer, buffer);
       strcat(bigbuffer, ":");
     }
     tmp = tmp->next;
   }
+
+  // if any instances of target func found, malloc and return
   if (bigbuffer[0]) {
     path = malloc( (1 + strlen(bigbuffer)) * sizeof(char));
     strcpy(path, bigbuffer);
     return path;
   }
+
+  // else return
   return NULL;
 } /* where() */
 
@@ -207,6 +262,7 @@ char *where(char *command, struct pathelement *pathlist )
  */
 void list ( char *dir ) 
 {
+  // handle for directory to be searched
   DIR *folder;
   struct dirent *entry;
   int files = 0;
@@ -228,8 +284,43 @@ void list ( char *dir )
   closedir(folder);
 } /* list() */
 
+
+/**
+ * @brief either polls for user input and overwrites prompt or copies input from args
+ * 
+ * @param p pointer to prompt
+ * @param args args containing new prompt value or NULL
+ */
+void setprompt(char *p, char **args) {
+  if (!args[1]) {
+    printf("Input prompt prefix: ");
+
+    // read input into a buffer
+    char buffer[128];
+    fgets(buffer, 127, stdin);
+    int len = strlen(buffer);
+    if (strlen(buffer) >= PROMPTMAX) {
+      buffer[PROMPTMAX - 1] = '\0';
+    } else {
+      buffer[len - 1] = '\0';
+    }
+    strcpy(p, buffer);
+  } else {
+    char buffer[128] = "\0";
+    int i = 1;
+    while (args[i] && i < MAXARGS) {
+      strcat(buffer, args[i]);
+      strcat(buffer, " ");
+      i++;
+    }
+    strncpy(p, buffer, PROMPTMAX - 1);
+    p[PROMPTMAX - 1] = '\0';
+  }
+} /* setpropmt() */
+
+
  
- /**
+/**
  * @brief clears and replaces args with input from command line
  * 
  * @param args holds the address of args to be revised
@@ -253,6 +344,13 @@ void getargs(char **args) {
   }
 }
 
+/**
+ * @brief frees all elements in args list and sets them to NULL
+ * useful for freeing args and ensuring that old args don't stick around and cause problems on repeated 
+ * uses of getargs
+ * 
+ * @param args pointer to list of args to be modified
+ */
 void clearargs(char **args) {
   for (int i = 0; i < MAXARGS; i++) {
     if (args[i] != NULL) {
@@ -262,6 +360,11 @@ void clearargs(char **args) {
   }
 }
 
+/**
+ * @brief simple function to print args, used for testing
+ * 
+ * @param args pointer to list of args to be printed
+ */
 void printargs(char **args) {
   for (int i = 0; i < MAXARGS; i++) {
     printf("args[%d]: %s\n", i, args[i]);
