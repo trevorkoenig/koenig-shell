@@ -57,7 +57,7 @@ int sh( int argc, char **argv, char **envp )
     /* print your prompt */
     printf("%s [%s]> ", prompt ? prompt : "", owd);
     /* get command line and process */
-    getargs(args);
+    argsct = getargs(args);
     if (!args[0]) {
       continue;
     }
@@ -113,7 +113,7 @@ int sh( int argc, char **argv, char **envp )
 
     /* CD FUNCTION */
     else if (strcmp(args[0], "cd") == 0) {
-      cd(owd, pwd, homedir, args);
+      cd(owd, pwd, homedir, args, argsct);
     }
 
     /* PWD FUNCTION */
@@ -128,7 +128,7 @@ int sh( int argc, char **argv, char **envp )
 
     /* PID FUNCTION */
     else if (strcmp(args[0], "pid") == 0) {
-      printf("pid\n");
+      printf("PID: %d\n", getpid());
     }
 
     /* KILL FUNCTION */
@@ -138,7 +138,17 @@ int sh( int argc, char **argv, char **envp )
 
     /* PROMPT FUNCTION */
     else if (strcmp(args[0], "prompt") == 0) {
-      setprompt(prompt, args);
+      setprompt(prompt, args, argsct);
+    }
+
+    /* PRINTENV FUNCTION*/
+    else if (strcmp(args[0], "printenv") == 0) {
+      printenv(environ, args, argsct);
+    }
+
+    /* SETENV FUNCTION */
+    else if (strcmp(args[0], "setenv") == 0) {
+
     }
 
     /* TEST FUNCTION */
@@ -294,7 +304,7 @@ void list ( char *dir )
  * @param p pointer to prompt
  * @param args args containing new prompt value or NULL
  */
-void setprompt(char *p, char **args) {
+void setprompt(char *p, char **args, int argsct) {
   if (!args[1]) {
     printf("Input prompt prefix: ");
 
@@ -310,11 +320,9 @@ void setprompt(char *p, char **args) {
     strcpy(p, buffer);
   } else {
     char buffer[128] = "\0";
-    int i = 1;
-    while (args[i] && i < MAXARGS) {
+    for (int i = 1; i < argsct; i++) {
       strcat(buffer, args[i]);
       strcat(buffer, " ");
-      i++;
     }
     strncpy(p, buffer, PROMPTMAX - 1);
     p[PROMPTMAX - 1] = '\0';
@@ -322,9 +330,9 @@ void setprompt(char *p, char **args) {
 } /* setprompt() */
 
 
-void cd(char *owd, char *pwd, char *homedir, char **args) {  
+void cd(char *owd, char *pwd, char *homedir, char **args, int argsct) {  
   char owdbuf[256];
-  if (args[1]) {
+  if (argsct == 2) {
     // go to previous directory
     if (strcmp(args[1], "-") == 0) {
       chdir(pwd);
@@ -349,11 +357,16 @@ void cd(char *owd, char *pwd, char *homedir, char **args) {
   }
   
   // go to home directory
-  else {
+  else if (argsct == 1) {
     strcpy(pwd, owd);
     chdir(homedir);
     getcwd(owdbuf, sizeof(owdbuf));
     strcpy(owd, owdbuf);
+  }
+
+  // too many args
+  else {
+    printf("Too many arguments entered\n");
   }
 } /* cd() */
 
@@ -368,13 +381,28 @@ int printwd() {
   return 0;
 } /* printwd() */
 
+void printenv(char **environ, char **args, int argsct) {
+  if (argsct == 1) {
+    int i = 0;
+    while (environ[i] != NULL) {
+      printf("%s\n", environ[i]);
+      i++;
+    }
+  } else if (argsct == 2) {
+    char *env;
+    env = getenv(args[1]);
+    printf("%s\n", env);
+  } else {
+    fprintf(stderr, "Too many arguments for printenv\n");
+  }
+}
  
 /**
  * @brief clears and replaces args with input from command line
  * 
  * @param args holds the address of args to be revised
  */
-void getargs(char **args) {
+int getargs(char **args) {
   // clear args
   clearargs(args);
   
@@ -386,11 +414,14 @@ void getargs(char **args) {
   // chop strings and copy to args
   char *token;
   token = strtok(buffer, " ");
-  for (int i = 0; token != NULL && i < MAXARGS; i++) {
+  int i = 0;
+  while (token != NULL && i < MAXARGS) {
     args[i] = malloc( (1 + strlen(token) ) * sizeof(char));
     strcpy(args[i], token);
     token = strtok(NULL, " ");
+    i++;
   }
+  return i;
 } /* getargs() */
 
 /**
