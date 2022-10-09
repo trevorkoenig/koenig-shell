@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "pwd.h": "c",
-        "get_path.h": "c"
+        "get_path.h": "c",
+        "chrono": "c"
     }
 }

@@ -16,6 +16,7 @@ void clearargs(char **args);
 void printargs(char **args);
 void sigHandler(int sig);
 void cSigHandler(int sig);
+int globtime(int argsct, char **args, int index);
 
 #define PROMPTMAX 32
 #define MAXARGS 10

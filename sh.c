@@ -186,7 +186,12 @@ int sh( int argc, char **argv, char **envp )
     /* TEST FUNCTION */
     else if (strcmp(args[0], "test") == 0) {
       printf("Executing 'test'\n");
-      printf("testing\n");
+      if (argsct <= 1) {
+        printf("not enough args\n");
+      }
+      else {
+        globtime(argsct, args, 1);
+      }
     }
 
      /*  else  program to exec */
@@ -566,4 +571,32 @@ void cSigHandler(int sig) {
     exit(128 + SIGTSTP);
     break;
   }
+}
+
+int globtime(int argsct, char **args, int index) {
+  glob_t globlist;
+  int i = 0;               
+  if (argsct == 1) {
+    return (-1);
+  } 
+  else {
+    int glout = glob(args[index], 0, NULL, &globlist);
+    if (glout == GLOB_NOSPACE ) {
+      printf("GLOB_NOSPACE\n");
+      return -1;
+    }
+    if (glout == GLOB_NOMATCH) { 
+      printf("GLOB_NOMATCH\n");
+      return -1;
+    }
+    if (glout == GLOB_ABORTED) {
+      printf("GLOB_ABORTED\n");
+      return 1;
+    }
+    while (globlist.gl_pathv[i]) {
+      printf("%s\n", globlist.gl_pathv[i]);
+      i++;
+    }
+  }
+  return (0);
 }
