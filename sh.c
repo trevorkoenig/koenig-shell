@@ -62,23 +62,14 @@ int sh( int argc, char **argv, char **envp )
     printf("%s [%s]> ", prompt ? prompt : "", owd);
     /* get command line and process */
     argsct = getargs(args);
-    if (argsct == -1) {
-      clearargs(args);
-      free(prompt);
-      free(args);
-      free(pwd);
-      free(owd);
-      go = 0;
-      printf("Exiting\n");
-      exit(29);
-    } else if (argsct == 0) {
+    if (argsct == 0) {
       continue;
     }
 
     /* check for each built in command and implement */
 
     /* EXIT FUNCTION */
-    if (strcmp(args[0], "exit") == 0) {
+    if (strcmp(args[0], "exit") == 0 || argsct == -1) {
       printf("Exiting\n");
       free(pathlist->element);
       struct pathelement *tmppathelement;
