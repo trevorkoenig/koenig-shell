@@ -336,7 +336,6 @@ void cd(char *owd, char *pwd, char *homedir, char **args) {
     else {
       struct stat statbuf;
       stat(args[1], &statbuf);
-      printf("IS_DIR: %d\n", S_ISDIR( statbuf.st_mode ));
       if ( S_ISDIR( statbuf.st_mode ) != 0 ) {
         strcpy(pwd, owd);
         chdir(args[1]);
