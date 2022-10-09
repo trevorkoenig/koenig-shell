@@ -336,14 +336,14 @@ void cd(char *owd, char *pwd, char *homedir, char **args) {
     // check if args[1] is a dir and go 
     else {
       struct stat statbuf;
-      stat(args[1], &statbuf);
-      if ( S_ISDIR( statbuf.st_mode ) ) {
+      int direxists = stat(args[1], &statbuf);
+      if ( direxists != -1 && S_ISDIR( statbuf.st_mode ) ) {
         strcpy(pwd, owd);
         chdir(args[1]);
         getcwd(owdbuf, sizeof(owdbuf));
         strcpy(owd, owdbuf);
       } else {
-        printf("%s is not a directory", args[1]);
+        printf("%s is not a directory\n", args[1]);
       }
     }    
   }
