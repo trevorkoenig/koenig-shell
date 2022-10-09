@@ -316,7 +316,7 @@ void setprompt(char *p, char **args) {
     strncpy(p, buffer, PROMPTMAX - 1);
     p[PROMPTMAX - 1] = '\0';
   }
-} /* setpropmt() */
+} /* setprompt() */
 
 
  
@@ -342,7 +342,7 @@ void getargs(char **args) {
     strcpy(args[i], token);
     token = strtok(NULL, " ");
   }
-}
+} /* getargs() */
 
 /**
  * @brief frees all elements in args list and sets them to NULL
