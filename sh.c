@@ -185,13 +185,8 @@ int sh( int argc, char **argv, char **envp )
 
     /* TEST FUNCTION */
     else if (strcmp(args[0], "test") == 0) {
-      printf("Executing 'test'\n");
-      if (argsct <= 1) {
-        printf("not enough args\n");
-      }
-      else {
-        globtime(argsct, args, 1);
-      }
+      printf("Executing test\n");
+      printf("Miscellaneous testing space\n");
     }
 
      /*  else  program to exec */
@@ -216,6 +211,13 @@ int sh( int argc, char **argv, char **envp )
         printf("Executing '%s'\n", fnpath);
         free(args[0]);
         args[0] = fnpath;
+        
+        for (int i = 1; args[i] && i < MAXARGS; i++) {
+          if (args[i][0] != '-') {
+            globtime(argsct, args, i);
+          }
+        }
+
         pid = fork();
 
         int status;
@@ -593,11 +595,12 @@ int globtime(int argsct, char **args, int index) {
       printf("GLOB_ABORTED\n");
       return 1;
     }
-    while (globbuf.gl_pathv[i]) {
-      printf("%s\n", globbuf.gl_pathv[i]);
+    while (globbuf.gl_pathv[i] && (index+i) < MAXARGS) {
+      args[index + i] = malloc(sizeof(globbuf.gl_pathv[i]));
+      strcpy(args[index+i], globbuf.gl_pathv[i]);
       i++;
     }
+    globfree(&globbuf);
   }
-  globfree(&globbuf);
   return (0);
 }
