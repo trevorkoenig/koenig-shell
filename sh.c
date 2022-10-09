@@ -133,7 +133,18 @@ int sh( int argc, char **argv, char **envp )
 
     /* KILL FUNCTION */
     else if (strcmp(args[0], "kill") == 0) {
-      printf("kill\n");
+      if (argsct == 1);
+      else if (argsct == 2) {
+        kill(args[1], SIGTERM);
+      } else if (argsct == 3) {
+        if (args[1][0] == '-') {
+          kill(args[2], args[1]);
+        } else {
+          kill(args[1], args[2]);
+        }
+      } else {
+        fprintf(stderr, "Too many arguments for kill\n");
+      }
     }
 
     /* PROMPT FUNCTION */
@@ -148,7 +159,7 @@ int sh( int argc, char **argv, char **envp )
 
     /* SETENV FUNCTION */
     else if (strcmp(args[0], "setenv") == 0) {
-
+      setenviron(environ, args, argsct);
     }
 
     /* TEST FUNCTION */
@@ -381,17 +392,25 @@ void cd(char *owd, char *pwd, char *homedir, char **args, int argsct) {
   }
 } /* cd() */
 
-int printwd() {
+/**
+ * @brief prints current working directory
+ */
+void printwd() {
   char cwd[PATH_MAX];
   if (getcwd(cwd, sizeof(cwd)) != NULL) {
     printf("Current working dir: %s\n", cwd);
   } else {
     perror("getcwd() error");
-    return 1;
   }
-  return 0;
 } /* printwd() */
 
+/**
+ * @brief prints off all environment variables onto their own line
+ * 
+ * @param environ pointer to the list of environment vars
+ * @param args list of arguments
+ * @param argsct number of arguments
+ */
 void printenv(char **environ, char **args, int argsct) {
   if (argsct == 1) {
     int i = 0;
@@ -406,7 +425,26 @@ void printenv(char **environ, char **args, int argsct) {
   } else {
     fprintf(stderr, "Too many arguments for printenv\n");
   }
-}
+} /* printenv() */
+
+/**
+ * @brief sets the system environment variables based on input
+ * 
+ * @param environ pointer to environment variables
+ * @param args list of arguments
+ * @param argsct number of arguments
+ */
+void setenviron(char **environ, char **args, int argsct) {
+  if (argsct == 1) {
+    printenv(environ, args, argsct);
+  } else if (argsct == 2) {
+    setenv(args[1], "", 1);
+  } else if (argsct == 3) {
+    setenv(args[1], args[2], 1);
+  } else {
+    fprintf(stderr, "setenv can only take 2 arguments\n");
+  }
+} /* setenv() */
  
 /**
  * @brief clears and replaces args with input from command line
