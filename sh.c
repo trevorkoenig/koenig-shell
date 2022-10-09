@@ -595,6 +595,7 @@ int globtime(int argsct, char **args, int index) {
       printf("GLOB_ABORTED\n");
       return 1;
     }
+    free(args[index]);
     while (globbuf.gl_pathv[i] && (index+i) < MAXARGS) {
       args[index+i] = malloc( strlen((globbuf.gl_pathv[i]) + 1)* sizeof(char));
       strcpy(args[index+i], globbuf.gl_pathv[i]);
