@@ -45,6 +45,7 @@ int sh( int argc, char **argv, char **envp )
 
   // initialize prompt
   prompt = malloc(PROMPTMAX * sizeof(char));
+  strcpy(prompt, "");
 
   owd = calloc(strlen(pwd) + 1, sizeof(char));
   memcpy(owd, pwd, strlen(pwd));
