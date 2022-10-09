@@ -128,7 +128,6 @@ int sh( int argc, char **argv, char **envp )
         }
       } else {
         fprintf(stderr, "%s: Command not found.\n", args[0]);
-        printargs(args);
       }
     }
   }
