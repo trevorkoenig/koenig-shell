@@ -330,6 +330,17 @@ void setprompt(char *p, char **args, int argsct) {
 } /* setprompt() */
 
 
+/**
+ * @brief accepts either 0 or 1 arguments and switches the current working directory based on 
+ * the input. no input means home dir, - means previous directory, and anything else will try to find a
+ * directory with that name and switch into it
+ * 
+ * @param owd open working directory
+ * @param pwd previous working directory
+ * @param homedir home directory
+ * @param args command line args
+ * @param argsct number of individual args
+ */
 void cd(char *owd, char *pwd, char *homedir, char **args, int argsct) {  
   char owdbuf[256];
   if (argsct == 2) {
