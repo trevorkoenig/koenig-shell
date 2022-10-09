@@ -574,13 +574,13 @@ void cSigHandler(int sig) {
 }
 
 int globtime(int argsct, char **args, int index) {
-  glob_t globlist;
+  glob_t globbuf;
   int i = 0;               
   if (argsct == 1) {
     return (-1);
   } 
   else {
-    int glout = glob(args[index], 0, NULL, &globlist);
+    int glout = glob(args[index], 0, NULL, &globbuf);
     if (glout == GLOB_NOSPACE ) {
       printf("GLOB_NOSPACE\n");
       return -1;
@@ -593,10 +593,11 @@ int globtime(int argsct, char **args, int index) {
       printf("GLOB_ABORTED\n");
       return 1;
     }
-    while (globlist.gl_pathv[i]) {
-      printf("%s\n", globlist.gl_pathv[i]);
+    while (globbuf.gl_pathv[i]) {
+      printf("%s\n", globbuf.gl_pathv[i]);
       i++;
     }
   }
+  globfree(&globbuf);
   return (0);
 }
