@@ -135,12 +135,12 @@ int sh( int argc, char **argv, char **envp )
     else if (strcmp(args[0], "kill") == 0) {
       if (argsct == 1);
       else if (argsct == 2) {
-        kill(args[1], SIGTERM);
+        kill(atoi(args[1]), SIGTERM);
       } else if (argsct == 3) {
         if (args[1][0] == '-') {
-          kill(args[2], args[1]);
+          kill(atoi(args[2]), atoi(args[1]));
         } else {
-          kill(args[1], args[2]);
+          kill(atoi(args[1]), atoi(args[2]));
         }
       } else {
         fprintf(stderr, "Too many arguments for kill\n");
