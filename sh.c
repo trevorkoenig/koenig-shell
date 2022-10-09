@@ -38,7 +38,6 @@ int sh( int argc, char **argv, char **envp )
   char **args= malloc(( 1 + MAXARGS ) * sizeof(char*));
   for (int i = 0; i < MAXARGS + 1; i++) {
     args[i] = NULL;
-    printf("args[%d]: %s\n", i, args[i]);
   }
 
   owd = calloc(strlen(pwd) + 1, sizeof(char));
@@ -82,8 +81,27 @@ int sh( int argc, char **argv, char **envp )
         printf("Error: which requires at least 1 argument\n");
       } else {
         tmp = which(args[1], pathlist);
-        printf("Path found: %s", tmp);
-        free(tmp);
+        if (tmp) {
+          printf("Path found: %s\n", tmp);
+          free(tmp);
+        } else {
+          printf("%s: not found\n", args[1]);
+        }
+      }
+    }
+
+    /* WHERE FUNCTION */
+    else if (strcmp(args[0], "where") == 0) {
+      if (args[1] == NULL) {
+        printf("Error: where requires at least 1 argument\n");
+      } else {
+        tmp = where(args[1], pathlist);
+        if (tmp) {
+          printf("Path found: %s\n", tmp);
+          free(tmp);
+        } else {
+          printf("%s: not found\n", args[1]);
+        }
       }
     }
 
@@ -131,19 +149,20 @@ char *which(char *command, struct pathelement *pathlist )
 {
   struct pathelement *tmp;
   tmp = pathlist;
+  char buffer[128];
   char *tmppath;
-  tmppath = malloc(50 * sizeof(char));
 
   while (tmp != NULL) {
-    strcpy(tmppath, tmp->element);
-    strcat(tmppath, "/");
-    strcat(tmppath, command);
-    if (!access(tmppath, F_OK & X_OK)) {
+    strcpy(buffer, tmp->element);
+    strcat(buffer, "/");
+    strcat(buffer, command);
+    if (!access(buffer, F_OK & X_OK)) {
+      tmppath = malloc( (1 + strlen(buffer)) * sizeof(char));
+      strcpy(tmppath, buffer);
       return tmppath;
     }
     tmp = tmp->next;
   }
-  free(tmppath);
   return NULL;
 } /* which() */
 
@@ -157,19 +176,26 @@ char *which(char *command, struct pathelement *pathlist )
  */
 char *where(char *command, struct pathelement *pathlist )
 {
-  /* similarly loop through finding all locations of command */
   struct pathelement *tmp;
   tmp = pathlist;
-  char *tmppath;
+  char buffer[128];
+  char bigbuffer[256] = "\0";
+  char *path;
 
   while (tmp != NULL) {
-
-    strcpy(tmppath, tmp->element);
-    strcat(tmppath, command);
-    if (!access(tmppath, F_OK & X_OK)) {
-      return tmppath;
+    strcpy(buffer, tmp->element);
+    strcat(buffer, "/");
+    strcat(buffer, command);
+    if (!access(buffer, F_OK & X_OK)) {
+      strcat(bigbuffer, buffer);
+      strcat(bigbuffer, ":");
     }
     tmp = tmp->next;
+  }
+  if (bigbuffer[0]) {
+    path = malloc( (1 + strlen(bigbuffer)) * sizeof(char));
+    strcpy(path, bigbuffer);
+    return path;
   }
   return NULL;
 } /* where() */
