@@ -7,6 +7,7 @@
 #include <pwd.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <glob.h>
@@ -53,7 +54,7 @@ int sh( int argc, char **argv, char **envp )
   while ( go )
   {
     /* print your prompt */
-    printf("%s [%s]> ", prompt ? prompt : "", pwd);
+    printf("%s [%s]> ", prompt ? prompt : "", owd);
     /* get command line and process */
     getargs(args);
     if (!args[0]) {
@@ -110,17 +111,17 @@ int sh( int argc, char **argv, char **envp )
 
     /* CD FUNCTION */
     else if (strcmp(args[0], "cd") == 0) {
-      printf("cd\n");
+      cd(owd, pwd, homedir, args);
     }
 
     /* PWD FUNCTION */
     else if (strcmp(args[0], "pwd") == 0) {
-      printf("PWD\n");
+      printwd();
     }
 
     /* LIST FUNCTION */
     else if (strcmp(args[0], "list") == 0) {
-      list(pwd);
+      list(owd);
     }
 
     /* PID FUNCTION */
@@ -318,6 +319,54 @@ void setprompt(char *p, char **args) {
   }
 } /* setprompt() */
 
+
+void cd(char *owd, char *pwd, char *homedir, char **args) {  
+  char owdbuf[256];
+  if (args[1]) {
+    // go to previous directory
+    if (strcmp(args[1], "-") == 0) {
+      char *tmp = malloc(strlen(owd) * sizeof(char));
+      chdir(pwd);
+      strcpy(pwd, owd);
+      getcwd(owdbuf, sizeof(owdbuf));
+      strcpy(owd, owdbuf);
+    }
+
+    // check if args[1] is a dir and go 
+    else {
+      struct stat statbuf;
+      stat(args[1], &statbuf);
+      printf("IS_DIR: %d\n", S_ISDIR( statbuf.st_mode ));
+      if ( S_ISDIR( statbuf.st_mode ) != 0 ) {
+        strcpy(pwd, owd);
+        chdir(args[1]);
+        getcwd(owdbuf, sizeof(owdbuf));
+        strcpy(owd, owdbuf);
+      } else {
+        printf("%s is not a directory", args[1]);
+      }
+    }    
+  }
+  
+  // go to home directory
+  else {
+    strcpy(pwd, owd);
+    chdir(homedir);
+    getcwd(owdbuf, sizeof(owdbuf));
+    strcpy(owd, owdbuf);
+  }
+} /* cd() */
+
+int printwd() {
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    printf("Current working dir: %s\n", cwd);
+  } else {
+    perror("getcwd() error");
+    return 1;
+  }
+  return 0;
+} /* printwd() */
 
  
 /**
