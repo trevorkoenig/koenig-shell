@@ -500,10 +500,9 @@ int getargs(char **args) {
   // grab input
   char buffer[128];
   char *checkeof;
-  fgets(buffer, 127, stdin);
+  checkeof = fgets(buffer, 127, stdin);
   if (checkeof == NULL) {
     printf("\nEOF Detected\n");
-    fflush(stdout);
     return -1;
   }
   buffer[strlen(buffer) - 1] = '\0';
