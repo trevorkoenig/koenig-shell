@@ -69,7 +69,7 @@ int sh( int argc, char **argv, char **envp )
     /* check for each built in command and implement */
 
     /* EXIT FUNCTION */
-    if (strcmp(args[0], "exit") == 0 || argsct == -1) {
+    if (strcmp(argsct == -1 || args[0], "exit") == 0) {
       printf("Exiting\n");
       free(pathlist->element);
       struct pathelement *tmppathelement;
