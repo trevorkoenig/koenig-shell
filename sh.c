@@ -143,7 +143,11 @@ int sh( int argc, char **argv, char **envp )
     /* LIST FUNCTION */
     else if (strcmp(args[0], "list") == 0) {
       printf("Executing 'list'\n");
-      list(owd);
+      if (argsct == 1) {
+        list(owd);
+      } else {
+        list(args[1]);
+      }
     }
 
     /* PID FUNCTION */
