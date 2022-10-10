@@ -14,6 +14,16 @@
 #include <math.h>
 #include "sh.h"
 
+/**
+ * @brief body of shell, prints prompt, polls for arguments, checks for built in functions,
+ * if not built in searches PATH var for possible matches, handles globs for arg[1] and on, 
+ * frees all memory on exit. cant be SIGINT'd or SIGTSTP'd to quit, will exit on EOF (ctrl+d)
+ * 
+ * @param argc doesn't matter
+ * @param argv doesn't matter
+ * @param envp doesn't matter
+ * @return int exit code
+ */
 int sh( int argc, char **argv, char **envp )
 {
   extern char ** environ;
@@ -245,7 +255,7 @@ int sh( int argc, char **argv, char **envp )
 
 /**
  * @brief loops through all directories contained in PATH environment variable and returns first
- * instance of the desired executable, returns NULL if not founD
+ * instance of the desired executable, returns NULL if not found
  * ALLOCATES RETURN STRING
  * 
  * @param command command to be searched
@@ -487,7 +497,7 @@ void setenviron(char **environ, char **args, int argsct) {
 } /* setenv() */
  
 /**
- * @brief clears and replaces args with input from command line
+ * @brief clears, frees, and replaces args with input from command line
  * 
  * @param args holds the address of args to be revised
  */
@@ -545,6 +555,11 @@ void printargs(char **args) {
   }
 }
 
+/**
+ * @brief handles signals, simply prints that SIGINT and SIGTSTP wont exit in parent function
+ * 
+ * @param sig 
+ */
 void sigHandler(int sig) {
   switch (sig)
   {
@@ -562,6 +577,12 @@ void sigHandler(int sig) {
   }
 }
 
+/**
+ * @brief function for handling args within child processes. 
+ * exits with code 130 for SIGINT and 146 for SIGTSTP
+ * 
+ * @param sig 
+ */
 void cSigHandler(int sig) {
   switch (sig)
   {
@@ -575,6 +596,15 @@ void cSigHandler(int sig) {
   }
 }
 
+/**
+ * @brief expands globs. allocates and later frees globs. allocates memory for the args which are 
+ * later cleared by the next call to getargs(). will overwrite any args following a glob expression
+ * 
+ * @param argsct number of args
+ * @param args arguments
+ * @param index index of glob expression within args
+ * @return int returns 0 on success, -1 on failure and 1 on an error
+ */
 int globtime(int argsct, char **args, int index) {
   glob_t globbuf;
   int i = 0;               
