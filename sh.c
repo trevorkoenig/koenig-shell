@@ -207,7 +207,7 @@ int sh( int argc, char **argv, char **envp )
       // checking for relative paths
       if (args[0][0] == '/' || args[0][0] == '.') {
         if (!access(args[0], F_OK & X_OK)) {
-          fnpath = malloc(strlen(args[0]) * sizeof(char));
+          fnpath = malloc( (strlen(args[0]) + 1) * sizeof(char));
           strcpy(fnpath, args[0]);
         } else {
           fnpath = NULL;
