@@ -1,6 +1,6 @@
 # Koenig Shell
 
-**Koenig Shell** is a simple shell implementation written in C. It provides basic shell functionalities while aiming to be easy to understand and modify. This shell is based on the xv6 operating system framework.
+**Koenig Shell** is a simple shell implementation written in C. It provides basic shell functionalities while aiming to be easy to understand and modify. This shell is based on the Xv6 operating system framework.
 
 ## Features
 
